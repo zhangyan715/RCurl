@@ -74,6 +74,6 @@ url=getForm("http://www.baidu.com/s","wd"="rcurl",rsv_spt="1",issp="1",
 write.table(url,"baidu-url.txt")
 
 url=getForm("http://www.baidu.com/s","wd"="电影团购",rsv_spt="1",issp="1",
-            rsv_bp="0",ie="utf-8",tn="baiduhome_pg",inputT="1332")
+            rsv_bp="0",ie="utf-8",tn="baiduhome_pg",inputT="1332")     #测试用其他关键字信息搜索，观察结果
 
 #postForm，提交表单
