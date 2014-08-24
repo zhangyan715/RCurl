@@ -1,0 +1,174 @@
+#######################第二周课上的例子#########################
+
+verbose:输出访问的交互信息
+httpheader:设置访问信息报头
+.encoding="UTF-8" "GBK"
+debugfunction,headerfunction,curl
+.params:提交的参数组
+dirlistonly:仅读取目录
+
+#抓取案例ftp://ftp.wcc.nrcs.usda.gov/data/snow/snow_course/table/history/idaho/
+
+library(RCurl)
+
+library(bitops)
+
+url="ftp://ftp.wcc.nrcs.usda.gov/data/snow/snow_course/table/history/idaho/"
+
+filename=getURL(url,dirlistionly=T)
+
+filename
+
+followlocation:支持重定向
+maxredirs:最大重定向次数
+
+#支持重定向例子
+
+curl=getCurlHandle()
+
+destination=getURL("http://www.sina.com",curl=curl)
+
+getCurlInfo(curl)$response.code
+
+destination=getURL("http://www.sina.com",curl=curl,followlocation=T)
+
+#getBinaryURL()下载文件
+#下载东营公安局公务员考试名单（公开信息）
+
+url="http://www.dyrsks.gov.cn/uploadfiles/2014%E5%B9%B4%E4%B8%9C%E8%90%A5%E5%B8%82%E6%8B%9B%E8%80%83%E5%85%AC%E5%AE%89%E6%9C%BA%E5%85%B3%E4%BA%BA%E6%B0%91%E8%AD%A6%E5%AF%9F%E8%BF%9B%E5%85%A5%E4%BD%93%E8%83%BD%E6%B5%8B%E8%AF%84%E8%8C%83%E5%9B%B4%E4%BA%BA%E5%91%98%E5%90%8D%E5%8D%95.xls"
+
+temp<-getBinaryURL(url)
+
+note<-file("hellodata.xls",open="wb")
+
+writeBin(temp,note)
+
+close(note)
+
+#批量下载文件的一个例子
+#下载http://rfunction.com/code/1202/中的R文件
+
+strsplit
+
+Sys.time()
+
+class(Sys.time())
+
+unlist(strsplit(as.character(Sys.time())," ")) #解放list格式
+
+unlist(strsplit(as.character(Sys.time())," ")) [2] #获得小时数据
+
+filename[1]
+
+strsplit(filename,"\r\n")
+
+html=getURL("http://rfunction.com/code/1202/")
+
+temp=strsplit(html,"<li><a href=\"")[[1]]  #转义符\"
+
+files=strsplit(temp,"\"")
+
+files=lapply(files,function(x){x[1]})  #需要了解下lapply的用法
+
+files=unlist(files)  #unlist去除list格式
+
+files=files[-(1:2)]  #去掉不要的
+
+base="http://rfunction.com/code/1202/"
+for(i in 1:length(files)){
+  url=paste(base,files[i],sep="")  #sep=""去掉paste两者中的空格
+  temp<-getBinaryURL(url)
+  note<-file(paste("1202",files[i],sep="."),open="wb")
+  writeBin(temp,note)
+  close(note)
+  Sys.sleep(2)
+}
+
+
+#XML简介，网页解析工具，在windows下对中文支持欠佳
+#表格，网页节点
+#对标准XML文件的解析函数xmlParse
+#对html的解析函数htmlTreeParse
+
+library(XML)
+
+url<-"http://www.bioguo.org/AnimalTFDB/BrowseAllTF.php?spe=Mus_musculus"
+
+wp<-getURL(url)
+
+doc<-htmlParse(wp,asText=T)
+
+tables<-readHTMLTable(doc,which=5)  #which是位置参数，第N个表格
+
+url<-"http://data.earthquake.cn/datashare/datashare_more_quickdata_new.jsp"
+
+urlen<-"http://219.143.71.11/wdc4seis@bj/earthquakes/csn_quakes_p001.jsp"
+
+p<-getURL(urlen)
+
+doc<-htmlParse(wp,asText=T)
+
+tables<-readHTMLTable(doc,header=F)
+
+#XPath
+斜杠/作为路径内部的分割符
+/ 表示选择根节点
+// 表示选择任意位置的某个节点
+@ 表示选择某个属性
+* 表示匹配任何元素节点
+@* 表示匹配任何属性值
+node() 表示匹配任何类型的节点
+
+url<-"http://www.w3school.com.cn/example/xmle/books.xml"
+
+doc<-xmlParse(url)
+
+getNodeSet(doc,"/bookstore/book[1]")   #抓第一本书
+
+getNodeSet(doc,"/bookstore/book[last()]")  #抓最后一本书
+
+getNodeSet(doc,"/bookstore/book[position()<3]")  #抓前两本书
+
+getNodeSet(doc,"//title[@lang]")
+
+getNodeSet(doc,"//book/price")
+
+getNodeSet(doc,"//title[@lang]|//book/price")
+
+
+#抓取大众点评电影团购
+
+myheader=c(
+  "User-Agent"="Mozilla/5.0(Windows;U;Windows NT 5.1;zh-CN;rv:1.9.1.6",
+  "Accept"="text/htmal,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+  "Accept-Language"="en-us",
+  "Connection"="keep-alive",
+  "Accept-Charset"="GB2312,utf-8;q=0.7,*;q=0.7"
+  )  #伪装报头
+
+temp<-getURL("http://t.dianping.com/movie/hangzhou",httpheader=myheader,encoding="UTF-8")
+
+write.table(temp,"temp.txt")  #输出
+
+k<-htmlParse(temp)  #解析网页
+
+getNodeSet(k,"//script[@type="text/plain"]")
+
+youhui=sapply(getNodeSet(k,"//script[@type="text/plain"]"),xmlValue)
+
+youhui[95]
+
+#读取多个page的循环
+
+urllist=0
+
+page=1:4
+
+urllist[page]<-paste("http://beijing.lashou.com/search.php?sw=%E5%81%A5%E8%BA%AB&cw=1&page=",page,seq="")
+
+for(url in urllist){
+  temp<-getURL("url",httpheader=myheader,encoding="UTF-8")
+  k=htmlParse(temp)
+  youhui=sapply(getNodeSet(k,"//script[@type="text/plain"]"),xmlValue)
+  cat(url,"\n")
+}
