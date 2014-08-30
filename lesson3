@@ -1,0 +1,133 @@
+#########################第三周################################
+
+#字符串处理基础
+#赋值
+#长度、个数 nchar,length
+#替换 chartr(原始字符，替换字符，字符串)
+mychar="dataguru"
+chartr("u","r",mychar)
+
+#连接 paste 参数sep,collapse
+paste("data","guru",sep="")
+
+list=c("data","guru","rcurl")
+paste(list,collapse="-")
+
+#切割 strsplit
+#比较 > < == !=
+#并集、交集、补集 union,intersect,setdiff
+list[1]<list[2]
+union(mychar,list)
+intersect(mychar,list)
+setdiff(list,mychar)  #补集
+
+#截取 substr,substring
+substr(mychar,1,4)
+
+substring(mychar,c(1,2),4)
+substring(mychar,c(1,2),c(2,4))
+
+#匹配 match pmatch charmatch
+match(mychar,list)
+match("data",list)
+match("guru",list)
+
+match("gur",list)
+pmatch("gur",list)
+
+charmatch("gur",list)
+
+#正则表达式,对字符串操作的一种逻辑公式
+#应用对象：文本
+#作用：逻辑过滤，精准抓取
+
+\ 转义字符
+. 除了换行以外的任意字符
+^ 一行字符串的起始
+$ 一行字符串的结束
+* 零个或者多个之前的字符
++ 一个或者多个之前的字符
+？零个或者一个之前的字符
+保留字符都需要转义字符\来转义表示
+
+方括号[]，代表可以匹配其中任何一个字符。而^在[]中代表“非”，-代表“之间”
+-[qjk] q,j,k中任意一个字符
+-[^qjk] 非q,j,k的任何其他字符
+-[a-z] a至z中任意一个小写字符
+-[^a-z] 非任意一个a至z小写字符的其他字符（可以是大写字符）
+-[a-zA-Z] 任意一个英文字母
+-[a-z]+ 一个或者多个小写英文字母
+
+| 或者
+小括号()与花括号{}配合“|”使用
+
+#常用的特殊转义字符含义
+\n 换行符
+\t tab
+\w 任意字母（包括下划线）或者数字 即[a-zA-Z0-9]
+\W \w的反义 即[^a-zA-Z0-9]
+\d 任意一个数字 即[0-9]
+\D \d的反义 即[^0-9]
+\s 任意一个空格，比如space，tab，newline等
+\S \s的反义，任意一个非空格
+
+#邮箱地址pattern
+pattern="^[A-Za-z0-9\\._%+-]+@[A-Za-z0-9\\.-]+\\.[A-Za-z]{2,4}$"
+
+#grepl 返回一个逻辑值
+#grep 返回匹配的id
+list<-c("sunshine@163.com","hujiko","data@jik.kom","kjhfdh@ji.jikol")
+grepl(pattern,list)
+
+grep(pattern,list)
+
+#正则替换 sub和gsub
+list1=paste(list,collapse=",")
+list1
+pattern2="\\w+@\\w+\\.[A-Za-z]{2,4}"
+sub(pattern2,"data",list1)
+gsub(pattern2,"data",list1)
+
+#regexpr 返回一个数字，1表示匹配，-1表示不匹配，以及两个属性，匹配的长度和是否使用useBytes
+#regexec 返回一个list，字符串中第一个匹配及其长度以及是否使用useBytes
+#gregexpr 返回一个list，每一个匹配及其长度以及是否使用useBytes
+
+regexpr(pattern,list)
+regexec(pattern,list)
+gregexpr(pattern,list)
+
+gregexpr(pattern2,list1)
+regexpr(pattern2,list1)
+regexec(pattern2,list1)
+
+#######抓取新浪财经个股历史交易数据，以华谊兄弟为例#######
+
+library(RCurl)
+
+temp=getURL("http://vip.stock.finance.sina.com.cn/corp/go.php/vMS_MarketHistory/stockid/300027.phtml?year=2014&jidu=3")
+
+#按回车符换行符切分抓下来的url
+k=strsplit(temp,"\r\n")[[1]] 
+k[2]
+
+#日期，grep返回pattern所在的行号
+timeadr=k[grep("<a target='_blank'",k)+1]
+head(timeadr)
+time=substring(timeadr,4,13)  #substring截取时间日期
+head(time)
+
+#开盘价
+fpriceadr=k[grep("<a target='_blank'",k)+3]
+head(fpriceadr)
+fprice=gregexpr(">\\d+",fpriceadr)
+head(fprice)
+
+for(i in 1:length(fpriceadr)){
+  tempp=fprice[[i]]
+  fprices[i]=substring(fpriceadr[i],tempp+1,tempp+attr(tempp,"match.length")+3)
+}
+head(fprices)
+
+#实时抓取分钟数据的case，以华谊兄弟为例
+pri=getURL("http://hq.sinajs.cn/list=sz300027",.encoding="GBK") #源代码是gbk格式
+pri
