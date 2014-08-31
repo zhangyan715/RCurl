@@ -1,0 +1,166 @@
+
+#抓取新浪财经个股日间历史交易数据，以华谊兄弟300027为例
+
+library(RCurl)
+
+temp<-getURL("http://vip.stock.finance.sina.com.cn/corp/go.php/vMS_MarketHistory/stockid/300027.phtml?year=2014&jidu=3")
+
+#按回车符、换行符切分抓下来的url
+k=strsplit(temp,"\r\n")[[1]] 
+k[2]
+head(k)
+
+#############################以下为测试过程##########################
+
+#抓日期时间，grep返回pattern所在的行号
+timeadr=k[grep("<a target='_blank'",k)+1] 
+head(timeadr)
+time=substring(timeadr,4,13) #substring截取时间日期
+head(time)
+
+#抓开盘价oprices,网页源代码中结构相似
+opriceadr=k[grep("<a target='_blank'",k)+3]
+head(opriceadr)
+oprice=gregexpr("\\d+.\\d+",opriceadr) #匹配开盘价数据所在位置及长度
+head(oprice)
+
+oprices=0
+tempo=oprice[[1]] #测试开盘价的截取
+oprices[1]=substring(opriceadr[1],tempo,tempo+attr(tempo,"match.length")-1)
+oprices[1]
+
+for(i in 1:length(opriceadr)){
+  tempo=oprice[[i]]
+  oprices[i]=substring(opriceadr[i],tempo,tempo+attr(tempo,"match.length")-1)
+  Sys.sleep(1) #Sys.sleep() 给爬虫一个1s的休息时间
+}
+head(oprices)
+
+#同理，抓收盘价cprices，最高价hprices，最低价lprices，交易量（股）volumes，交易金额（元）amounts
+cpriceadr=k[grep("<a target='_blank'",k)+5]
+head(cpriceadr)
+cprice=gregexpr("\\d+.\\d+",cpriceadr)
+head(cprice)
+
+cprices=0
+tempc=cprice[[1]] #测试收盘价的截取
+cprices[1]=substring(cpriceadr[1],tempc,tempc+attr(tempc,"match.length")-1)
+cprices[1]
+
+----------------------------------------------------------------------------
+
+hpriceadr=k[grep("<a target='_blank'",k)+4]
+head(hpriceadr)
+hprice=gregexpr("\\d+.\\d+",hpriceadr)
+head(hprice)
+
+hprices=0
+temph=hprice[[1]] #测试最高价的截取
+hprices[1]=substring(hpriceadr[1],temph,temph+attr(temph,"match.length")-1)
+hprices[1]
+
+----------------------------------------------------------------------------
+
+lpriceadr=k[grep("<a target='_blank'",k)+6]
+head(lpriceadr)
+lprice=gregexpr("\\d+.\\d+",lpriceadr)
+head(lprice)
+
+lprices=0
+templ=lprice[[1]] #测试最低价的截取
+lprices[1]=substring(lpriceadr[1],templ,templ+attr(templ,"match.length")-1)
+lprices[1]
+
+----------------------------------------------------------------------------
+  
+volumeadr=k[grep("<a target='_blank'",k)+7]
+head(volumeadr)
+volume=gregexpr("\\d+",volumeadr)
+head(volume)
+
+volumes=0
+tempv=volume[[1]] #测试交易量的截取
+volumes[1]=substring(volumeadr[1],tempv,tempv+attr(tempv,"match.length")-1)
+volumes[1]
+
+----------------------------------------------------------------------------
+  
+amountadr=k[grep("<a target='_blank'",k)+8]
+head(amountadr)
+amount=gregexpr("\\d+",amountadr)
+head(amount)
+
+amounts=0
+tempa=amount[[1]] #测试交易金额的截取
+amounts[1]=substring(amountadr[1],tempa,tempa+attr(tempa,"match.length")-1)
+amounts[1]
+
+#############################以上为测试过程#############################
+
+timeadr=k[grep("<a target='_blank'",k)+1]
+time=substring(timeadr,4,13)
+time=0
+
+opriceadr=k[grep("<a target='_blank'",k)+3]
+oprice=gregexpr("\\d+.\\d+",opriceadr)
+oprices=0
+
+cpriceadr=k[grep("<a target='_blank'",k)+5]
+cprice=gregexpr("\\d+.\\d+",cpriceadr)
+cprices=0
+
+hpriceadr=k[grep("<a target='_blank'",k)+4]
+hprice=gregexpr("\\d+.\\d+",hpriceadr)
+hprices=0
+
+lpriceadr=k[grep("<a target='_blank'",k)+6]
+lprice=gregexpr("\\d+.\\d+",lpriceadr)
+lprices=0
+
+volumeadr=k[grep("<a target='_blank'",k)+7]
+volume=gregexpr("\\d+",volumeadr)
+volumes=0
+
+amountadr=k[grep("<a target='_blank'",k)+8]
+amount=gregexpr("\\d+",amountadr)
+amounts=0
+
+
+#写个循环，抓单页面的历史交易数据
+for(i in 1:length(opriceadr)){
+  tempo=oprice[[i]]
+  tempc=cprice[[i]]
+  temph=hprice[[i]]
+  templ=lprice[[i]]
+  tempv=volume[[i]]
+  tempa=amount[[i]]
+  time[i]=substring(timeadr[i],4,13)
+  oprices[i]=substring(opriceadr[i],tempo,tempo+attr(tempo,"match.length")-1)
+  cprices[i]=substring(cpriceadr[i],tempc,tempc+attr(tempc,"match.length")-1)
+  hprices[i]=substring(hpriceadr[i],temph,temph+attr(temph,"match.length")-1)
+  lprices[i]=substring(lpriceadr[i],templ,templ+attr(templ,"match.length")-1)
+  volumes[i]=substring(volumeadr[i],tempv,tempv+attr(tempv,"match.length")-1)
+  amounts[i]=substring(amountadr[i],tempa,tempa+attr(tempa,"match.length")-1)
+  table<-data.frame(time,oprices,cprices,hprices,lprices,volumes,amounts)
+} #测试成功
+
+
+#尝试下抓取华谊兄弟全部历史交易数据，从2009年4季度开始~至今
+#构建urllist
+http://vip.stock.finance.sina.com.cn/corp/go.php/vMS_MarketHistory/stockid/300027.phtml?year=2009&jidu=4
+
+urllist<-0
+
+a<-data.frame(year=c(2009,2009,2009,2009,2010,2010,2010,2010,2011,2011,2011,2011,
+                     2012,2012,2012,2012,2013,2013,2013,2013,2014,2014,2014,2014),
+              jidu=c(rep(1:4,6)))
+
+for(m in 1:length(a$year)){
+  url<-"http://vip.stock.finance.sina.com.cn/corp/go.php/vMS_MarketHistory/stockid/300027.phtml?year="
+  url1<-paste0(url,a[m,1],sep="")
+  url2<-paste0(url1,"&jidu=",sep="")
+  urllist[m]<-paste0(url2,a[m,2],sep="")
+}
+head(urllist) #我用自己能看懂的，非常土的方式实现构建了urllist
+  
+#至此，利用RCurl中第三周的视频中的思路去获得全部的个股历史数据，已超过我目前的能力范围，应该有更好的方法去解决抓取个股历史交易数据。
